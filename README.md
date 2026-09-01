@@ -9,7 +9,7 @@ References:
 
 ## Status
 
-**Weeks 1–2 done.**
+**Weeks 1–3 done.**
 
 Week 1 — field and polynomial arithmetic:
 - `kyber/params.py` — ring parameters (N = 256, q = 3329) and module ranks.
@@ -27,6 +27,16 @@ Week 2 — NTT and sampling:
 - `kyber/sample.py` — `Parse`/`rej_uniform` (Algorithm 1) to build the matrix A
   from a SHAKE-128 stream, and `cbd` (Algorithm 2) for the centered binomial
   noise from a SHAKE-256 stream. Uses Python's built-in SHAKE.
+
+Week 3 — symmetric primitives and serialization:
+- `kyber/symmetric.py` — the SHA-3/SHAKE wrappers Kyber names (`H`, `G`, `PRF`,
+  `XOF`, `KDF`), verified against published NIST test vectors. `sample.py` now
+  imports its `xof`/`prf` from here (single definition of each primitive).
+- `kyber/encode.py` — `Compress_q`/`Decompress_q` (d-bit rounding) and
+  `Encode_l`/`Decode_l` byte packing, plus polynomial and vector
+  (de)serialization used for keys (12-bit) and ciphertexts (d-bit).
+- `kyber/params.py` — full per-level parameter sets (`PARAMS`: k, eta1, eta2,
+  du, dv).
 
 ## Design note
 
@@ -55,7 +65,7 @@ python3 -m unittest discover -s tests -v
 |------|-------|
 | 1 | Field and polynomial arithmetic ✅ |
 | 2 | NTT and sampling ✅ |
-| 3 | SHA-3/SHAKE and encode/compress |
+| 3 | SHA-3/SHAKE and encode/compress ✅ |
 | 4 | Kyber.CPAPKE |
 | 5 | Kyber.CCAKEM (FO transform) + KAT validation |
 | 6 | Constant-time and fuzzing |

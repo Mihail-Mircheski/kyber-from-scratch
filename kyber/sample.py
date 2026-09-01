@@ -8,16 +8,14 @@ Two sources of pseudorandomness, both from the SHA-3 family (spec section 2.3):
   - CBD (Algorithm 2): the centered binomial distribution B_eta, drawn from a
     SHAKE-256 (PRF) stream, used for the secret and error terms.
 
-These use Python's hashlib SHAKE, so no separate Keccak code is needed (that is
-the Week 3 concern; here we only need a byte source that behaves like the spec's
-XOF and PRF).
+The XOF (SHAKE-128) and PRF (SHAKE-256) wrappers now live in kyber.symmetric;
+this module imports them so there is a single definition of each primitive.
 """
-
-import hashlib
 
 from .params import N, Q
 from .poly import Poly
 from .polyvec import PolyMat
+from .symmetric import xof, prf
 
 XOF_BLOCKBYTES = 168  # SHAKE-128 rate
 
@@ -48,19 +46,9 @@ def cbd(buf, eta):
     return Poly(coeffs)
 
 
-def prf(key, nonce, length):
-    """PRF: SHAKE-256(key || nonce)."""
-    return hashlib.shake_256(bytes(key) + bytes([nonce])).digest(length)
-
-
 def get_noise(key, nonce, eta):
     """Sample a noise polynomial from B_eta (spec section 1.2, PRF + CBD)."""
     return cbd(prf(key, nonce, 64 * eta), eta)
-
-
-def xof(seed, i, j, length):
-    """XOF: SHAKE-128(seed || i || j)."""
-    return hashlib.shake_128(bytes(seed) + bytes([i, j])).digest(length)
 
 
 def rej_uniform(buf, need=N):
