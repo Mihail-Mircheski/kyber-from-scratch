@@ -17,7 +17,7 @@ compensating R via the final scale F, so the round trip lands exactly on f * g.
 """
 
 from .params import N, Q
-from .reduce import fqmul, barrett_reduce
+from .reduce import fqmul, barrett_reduce, montgomery_reduce
 from .poly import Poly
 
 # Precomputed twiddle factors (Montgomery form), from the Kyber reference.
@@ -101,6 +101,43 @@ def basemul_poly(a, b):
             a[4 * i + 2], a[4 * i + 3], b[4 * i + 2], b[4 * i + 3], -zeta
         )
     return r
+
+
+# -- Montgomery-domain helpers ---------------------------------------------
+#
+# `basemul` (and therefore any accumulation of base products) leaves its result
+# scaled by R^-1. Two callers care:
+#
+#   * A full multiply invntt(basemul(a, b)) needs no fix: `invntt` carries a
+#     compensating R in its final scale F, so the R^-1 cancels exactly.
+#   * A value that stays in the NTT domain -- t_hat in key generation -- has no
+#     inverse transform to supply that R, so it is corrected explicitly with
+#     `poly_tomont`.
+
+# R^2 mod q. One montgomery_reduce turns a factor of R^2 into a factor of R.
+TOMONT_F = (1 << 32) % Q
+
+
+def poly_tomont(p):
+    """Multiply every coefficient by R = 2^16 (mod q).
+
+    Cancels the R^-1 that `basemul` leaves behind, for results kept in the NTT
+    domain. Mirrors poly_tomont in the reference implementation.
+    """
+    return Poly([montgomery_reduce(c * TOMONT_F) for c in p.coeffs])
+
+
+def basemul_acc(a_polys, b_polys):
+    """Inner product of two NTT-domain vectors: sum_j a[j] o b[j].
+
+    The result is one Poly, still in the NTT domain and still carrying the
+    R^-1 factor from `basemul` (see the note above). Mirrors
+    polyvec_basemul_acc_montgomery in the reference implementation.
+    """
+    acc = Poly.zero()
+    for a, b in zip(a_polys, b_polys):
+        acc = acc + poly_basemul(a, b)
+    return acc
 
 
 # -- Poly-level convenience wrappers ---------------------------------------

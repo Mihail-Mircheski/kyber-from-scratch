@@ -9,7 +9,7 @@ References:
 
 ## Status
 
-**Weeks 1–3 done.**
+**Weeks 1–4 done.**
 
 Week 1 — field and polynomial arithmetic:
 - `kyber/params.py` — ring parameters (N = 256, q = 3329) and module ranks.
@@ -38,6 +38,21 @@ Week 3 — symmetric primitives and serialization:
 - `kyber/params.py` — full per-level parameter sets (`PARAMS`: k, eta1, eta2,
   du, dv).
 
+Week 4 — Kyber.CPAPKE:
+- `kyber/pke.py` — the IND-CPA scheme (spec Algorithms 4, 5, 6): `keygen`,
+  `encrypt`, `decrypt` for all three parameter sets. Randomness is injectable
+  (`d` for KeyGen, `coins` for Enc), so encryption is a deterministic function
+  of its coins — what the FO transform needs in Week 5. Keys are stored in the
+  NTT domain (`t_hat`, `s_hat`) so they are byte-compatible with the reference.
+  `decryption_noise` is a diagnostic that exposes the error term the tests
+  measure against the q/4 decision boundary.
+- `kyber/ntt.py` — gained `poly_tomont` and `basemul_acc`. `basemul` leaves an
+  R^-1 factor; `invntt` cancels it for u and v, but `t_hat` never leaves the NTT
+  domain, so it needs the correction applied explicitly.
+
+Sizes match the published parameters: public keys 800/1184/1568 bytes, CPA
+secret keys 768/1152/1536, ciphertexts 768/1088/1568.
+
 ## Design note
 
 The schoolbook multiply in `poly.py` is deliberately slow but obviously
@@ -47,6 +62,13 @@ wraparound, commutativity, distributivity, associativity) pin down the
 negacyclic behavior. The Week 2 NTT multiply (`ntt_mul`) is then required to
 agree with this oracle on random inputs, and the module gate checks that A.s
 computed in the NTT domain matches the naive schoolbook A.s.
+
+Week 4 keeps that oracle in play. Encrypt/decrypt round-trips only show the
+implementation agrees with itself — a Montgomery factor dropped in both KeyGen
+and Dec would cancel out and still round-trip. So `tests/test_pke.py` also
+rebuilds `t = A.s + e` with the Week 1 schoolbook multiply and requires the
+serialized `t_hat` to equal its NTT, and it measures the decryption error term
+rather than only observing that the message came back.
 
 ## Running the tests
 
@@ -66,7 +88,7 @@ python3 -m unittest discover -s tests -v
 | 1 | Field and polynomial arithmetic ✅ |
 | 2 | NTT and sampling ✅ |
 | 3 | SHA-3/SHAKE and encode/compress ✅ |
-| 4 | Kyber.CPAPKE |
+| 4 | Kyber.CPAPKE ✅ |
 | 5 | Kyber.CCAKEM (FO transform) + KAT validation |
 | 6 | Constant-time and fuzzing |
 | 7 | Optimization and docs |

@@ -1,4 +1,4 @@
-"""Kyber from scratch — Week 1: field and polynomial arithmetic."""
+"""Kyber from scratch — arithmetic, NTT, symmetric primitives and CPA-PKE."""
 
 from .params import N, Q, K_BY_LEVEL, PARAMS
 from .reduce import (
@@ -12,7 +12,17 @@ from .reduce import (
 )
 from .poly import Poly
 from .polyvec import PolyVec, PolyMat
-from .ntt import ntt, invntt, ntt_mul, poly_ntt, poly_invntt, poly_basemul, ntt_matvec
+from .ntt import (
+    ntt,
+    invntt,
+    ntt_mul,
+    poly_ntt,
+    poly_invntt,
+    poly_basemul,
+    poly_tomont,
+    basemul_acc,
+    ntt_matvec,
+)
 from .sample import cbd, get_noise, gen_poly, gen_matrix
 from .symmetric import H, G, prf, xof, kdf
 from .encode import (
@@ -28,6 +38,20 @@ from .encode import (
     polyvec_frombytes,
     polyvec_compress,
     polyvec_decompress,
+)
+from .pke import (
+    SYMBYTES,
+    MSGBYTES,
+    get_params,
+    public_key_bytes,
+    secret_key_bytes,
+    ciphertext_bytes,
+    poly_frommsg,
+    poly_tomsg,
+    keygen,
+    encrypt,
+    decrypt,
+    decryption_noise,
 )
 
 __all__ = [
@@ -51,6 +75,8 @@ __all__ = [
     "poly_ntt",
     "poly_invntt",
     "poly_basemul",
+    "poly_tomont",
+    "basemul_acc",
     "ntt_matvec",
     "cbd",
     "get_noise",
@@ -73,4 +99,16 @@ __all__ = [
     "polyvec_frombytes",
     "polyvec_compress",
     "polyvec_decompress",
+    "SYMBYTES",
+    "MSGBYTES",
+    "get_params",
+    "public_key_bytes",
+    "secret_key_bytes",
+    "ciphertext_bytes",
+    "poly_frommsg",
+    "poly_tomsg",
+    "keygen",
+    "encrypt",
+    "decrypt",
+    "decryption_noise",
 ]
