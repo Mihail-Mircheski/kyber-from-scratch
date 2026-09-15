@@ -1,4 +1,11 @@
-"""Kyber from scratch — arithmetic, NTT, symmetric primitives and CPA-PKE."""
+"""Kyber from scratch — arithmetic, NTT, symmetric primitives, CPA-PKE and CCA-KEM.
+
+The flat names below are the PKE layer, kept as they were. The KEM layer
+reuses several of the same names (`keygen`, `secret_key_bytes`), so rather
+than shadowing them it is reached through the module: `kyber.kem.keygen`,
+`kyber.kem.secret_key_bytes`. `encaps` and `decaps` are unambiguous and are
+exported flat.
+"""
 
 from .params import N, Q, K_BY_LEVEL, PARAMS
 from .reduce import (
@@ -53,6 +60,8 @@ from .pke import (
     decrypt,
     decryption_noise,
 )
+from . import pke, kem, drbg
+from .kem import SSBYTES, encaps, decaps
 
 __all__ = [
     "N",
@@ -111,4 +120,10 @@ __all__ = [
     "encrypt",
     "decrypt",
     "decryption_noise",
+    "pke",
+    "kem",
+    "drbg",
+    "SSBYTES",
+    "encaps",
+    "decaps",
 ]
