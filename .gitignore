@@ -3,3 +3,6 @@ __pycache__/
 .pytest_cache/
 .venv/
 .DS_Store
+
+# Extracted NIST submission package; tests/kat/ holds the files the suite uses
+/KAT/

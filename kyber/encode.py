@@ -45,13 +45,18 @@ def decompress(y, d):
 # -- Byte (de)serialization: Encode_l / Decode_l ---------------------------
 
 def byte_encode(coeffs, d):
-    """Pack N d-bit coefficients into 32*d bytes (LSB-first bit order)."""
+    """Pack N d-bit coefficients into 32*d bytes (LSB-first bit order).
+
+    The OR is unconditional: the shifted bit is simply 0 when unset. Week 6
+    replaced a ``if (c >> j) & 1`` here, which branched on secret data --
+    this routine serializes the secret key and, via poly_tomsg, the recovered
+    message.
+    """
     out = bytearray((N * d + 7) // 8)
     pos = 0
     for c in coeffs:
         for j in range(d):
-            if (c >> j) & 1:
-                out[pos >> 3] |= 1 << (pos & 7)
+            out[pos >> 3] |= ((c >> j) & 1) << (pos & 7)
             pos += 1
     return bytes(out)
 

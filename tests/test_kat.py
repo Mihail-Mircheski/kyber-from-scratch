@@ -8,6 +8,9 @@ in tests/kat/ as, for example,
     tests/kat/PQCkemKAT_2400.rsp      (Kyber768)
     tests/kat/PQCkemKAT_3168.rsp      (Kyber1024)
 
+Use the plain files, not the `-90s` variants: those substitute AES and SHA-2
+for the SHA-3 primitives and will not match this implementation.
+
 These tests skip while the files are absent, so the suite stays green on a
 fresh clone. Once a file is present, the test reproduces every case in it: the
 DRBG is re-seeded from the recorded `seed` and then drives key generation and
@@ -61,7 +64,7 @@ def run_case(level, seed):
 
 
 class TestKAT(unittest.TestCase):
-    def _run_level(self, level, limit=10):
+    def _run_level(self, level, limit=None):
         path = os.path.join(KAT_DIR, FILES[level])
         if not os.path.exists(path):
             self.skipTest(f"no KAT file at {path}")
@@ -69,7 +72,7 @@ class TestKAT(unittest.TestCase):
         cases = parse_rsp(path)
         self.assertTrue(cases, f"{path} parsed to zero cases")
 
-        for case in cases[:limit]:
+        for case in (cases if limit is None else cases[:limit]):
             pk, sk, ct, ss = run_case(level, case["seed"])
             self.assertEqual(pk, case["pk"], "public key mismatch")
             self.assertEqual(sk, case["sk"], "secret key mismatch")

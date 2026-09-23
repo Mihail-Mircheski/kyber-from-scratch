@@ -12,6 +12,7 @@ Two layers:
 """
 
 from .params import Q
+from .ct import to_int16
 
 # 2^16 mod Q, used as the Montgomery factor R.
 MONT = 2285
@@ -44,11 +45,13 @@ def mod_pm(a, alpha=Q):
 
 
 def _to_int16(x):
-    """Interpret the low 16 bits of x as a signed 16-bit integer."""
-    x &= 0xFFFF
-    if x >= 0x8000:
-        x -= 0x10000
-    return x
+    """Interpret the low 16 bits of x as a signed 16-bit integer.
+
+    Week 6 moved the body into kyber.ct and made it branchless. The original
+    ``if x >= 0x8000`` was a branch on secret data: this runs inside every NTT
+    butterfly, and the NTT is applied to the secret vectors s and r.
+    """
+    return to_int16(x)
 
 
 def barrett_reduce(a):

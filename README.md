@@ -9,7 +9,7 @@ References:
 
 ## Status
 
-**Weeks 1–5 done** (KAT validation pending — see below).
+**Weeks 1–6 done.** All official KAT vectors pass.
 
 Week 1 — field and polynomial arithmetic:
 - `kyber/params.py` — ring parameters (N = 256, q = 3329) and module ranks.
@@ -66,14 +66,55 @@ Week 5 — Kyber.CCAKEM:
   takes no third-party dependencies, so the block cipher is built here and
   pinned against the FIPS-197 worked example.
 
+Week 6 — hardening and constant-time:
+- `kyber/ct.py` — the constant-time primitives in one auditable place:
+  branchless sign extension, a conditional move, and a constant-time byte
+  compare.
+- Two secret-dependent branches removed. `reduce._to_int16` branched on the
+  sign bit inside `montgomery_reduce`, which every NTT butterfly over the
+  secret vectors s and r calls. `encode.byte_encode` branched per bit while
+  serializing the secret key and the recovered message. Both are now
+  arithmetic, and `tests/test_ct.py` pins each rewrite against the branching
+  version it replaced — `to_int16` over all 65 536 inputs.
+- Fuzzing of the rejection path: single-bit flips across the ciphertext,
+  random and degenerate ciphertexts, and unrelated keys. Decaps must always
+  return 32 bytes, never raise, and never agree.
+
+**Caveat, stated plainly:** CPython gives no real timing guarantee — integers
+are arbitrary-precision objects and `bytes` allocate. What this buys is source
+with no secret-dependent control flow, which survives a port to C or Rust and
+can be checked by reading. Do not treat this Python as timing-hardened in
+production.
+
+One week-6 item remains open: the constant-time review of `kyber/drbg.py`,
+which uses secret-indexed S-box lookups. It is reachable only from the KAT
+harness and never from the scheme, so it was left deliberately. The KATs
+passing also settles the "compare against the reference" item -- agreement on
+300 cases is a stronger check than spot-comparing intermediates.
+
 ## KAT status
 
-The week 5 gate — matching the official Known Answer Test vectors — is **not yet
-closed**. The harness is written and skips until the vector files are present.
-Download the KAT `.rsp` files from the Kyber submission package and drop them in
-`tests/kat/`; see `tests/test_kat.py` for the expected names. Until then the
-implementation is verified as self-consistent but not confirmed byte-compatible
-with the reference.
+**Passing.** All 300 official Known Answer Test cases — 100 per parameter set —
+match byte for byte: public key, secret key, ciphertext and shared secret, plus
+a decapsulation check on each that the vectors themselves do not record.
+
+The vectors live in `tests/kat/` and come from the Round-3 NIST submission
+package. Use the plain files, not the `-90s` variants: those substitute AES and
+SHA-2 for the SHA-3 primitives and will not match this implementation.
+
+```
+tests/kat/PQCkemKAT_1632.rsp      Kyber512
+tests/kat/PQCkemKAT_2400.rsp      Kyber768
+tests/kat/PQCkemKAT_3168.rsp      Kyber1024
+```
+
+`tests/test_kat.py` re-seeds the AES-256 CTR DRBG from each recorded seed and
+drives key generation and encapsulation in the same call order as
+`PQCgenKAT_kem.c`. The tests skip if the files are removed, so the suite stays
+green on a clone without them.
+
+This is what upgrades the claim from "self-consistent" to "byte-compatible with
+the reference implementation".
 
 ## Design note
 
@@ -119,6 +160,6 @@ python3 -m unittest discover -s tests -v
 | 2 | NTT and sampling ✅ |
 | 3 | SHA-3/SHAKE and encode/compress ✅ |
 | 4 | Kyber.CPAPKE ✅ |
-| 5 | Kyber.CCAKEM (FO transform) ✅ + KAT validation ⏳ |
-| 6 | Constant-time and fuzzing |
+| 5 | Kyber.CCAKEM (FO transform) + KAT validation ✅ |
+| 6 | Constant-time and fuzzing ✅ |
 | 7 | Optimization and docs |

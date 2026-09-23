@@ -34,11 +34,11 @@ needed on every call, and z is the rejection seed.
 Spec: Algorithm 7 (KeyGen), Algorithm 8 (Encaps), Algorithm 9 (Decaps).
 """
 
-import hmac
 import os
 
 from . import pke
 from .pke import SYMBYTES, get_params, public_key_bytes, ciphertext_bytes
+from .ct import eq_bytes, select_bytes
 from .symmetric import H, G, kdf
 
 # The shared secret is 32 bytes at every security level.
@@ -63,16 +63,9 @@ def _split_secret_key(sk, level):
             sk[n_cpa + n_pk + SYMBYTES:])
 
 
-def _select(condition, a, b):
-    """Return a if condition else b, reading both operands either way.
-
-    Mirrors `cmov` in the reference implementation. Python cannot give a real
-    constant-time guarantee, but writing the choice as a mask rather than an
-    `if` keeps the secret-dependent branch out of the source, which is what
-    week 6 will need to audit.
-    """
-    mask = -int(bool(condition)) & 0xFF      # 0xFF when true, 0x00 when false
-    return bytes((x & mask) | (y & (~mask & 0xFF)) for x, y in zip(a, b))
+# Week 6 moved these into kyber.ct so the constant-time argument lives in one
+# audited place. The alias keeps the original private name working.
+_select = select_bytes
 
 
 # -- Algorithm 7: KeyGen ----------------------------------------------------
@@ -144,8 +137,8 @@ def decaps(sk, ct, level=768):
 
     # Re-encrypt with the coins the sender would have used and compare.
     ct2 = pke.encrypt(pk, m2, r2, level)
-    ok = hmac.compare_digest(ct, ct2)
+    ok = eq_bytes(ct, ct2)
 
     # On failure substitute z for K_bar, then derive the key either way.
-    pre = _select(ok, k_bar2, z)
+    pre = select_bytes(ok, k_bar2, z)
     return kdf(pre + H(ct), SSBYTES)

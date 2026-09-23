@@ -60,7 +60,8 @@ from .pke import (
     decrypt,
     decryption_noise,
 )
-from . import pke, kem, drbg
+from . import pke, kem, drbg, ct
+from .ct import to_int16, select_bytes, eq_bytes
 from .kem import SSBYTES, encaps, decaps
 
 __all__ = [
@@ -123,6 +124,10 @@ __all__ = [
     "pke",
     "kem",
     "drbg",
+    "ct",
+    "to_int16",
+    "select_bytes",
+    "eq_bytes",
     "SSBYTES",
     "encaps",
     "decaps",
