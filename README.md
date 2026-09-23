@@ -1,7 +1,21 @@
 # Kyber from scratch
 
-A readable, from-scratch implementation of Kyber (CRYSTALS-Kyber / ML-KEM),
-built bottom-up following the [7-week timeline](kyber-timeline.md).
+A readable, from-scratch implementation of **Round-3 CRYSTALS-Kyber**, built
+bottom-up following the [7-week timeline](kyber-timeline.md).
+
+**This is Round-3 Kyber, not ML-KEM.** The decision was taken deliberately
+before week 4. ML-KEM (FIPS 203, 2024) is the finalized NIST standard and the
+one to ship in production; it differs from Round-3 Kyber by a domain-separation
+byte in key generation, by dropping the ciphertext hash from the final key
+derivation, and by tightened sampling bounds. Same underlying scheme,
+incompatible outputs — an ML-KEM implementation and this one will not agree on
+keys or shared secrets.
+
+Round-3 was chosen because it is what the specification below documents and
+what the available Known Answer Test vectors cover, which is what let the
+correctness gate be closed. Porting to ML-KEM would be localized to the KEM
+layer and a couple of hash inputs; weeks 1-4 would be essentially untouched,
+and it would need NIST's separate ML-KEM vectors to validate against.
 
 References:
 - Round 3 specification: https://pq-crystals.org/kyber/data/kyber-specification-round3-20210804.pdf

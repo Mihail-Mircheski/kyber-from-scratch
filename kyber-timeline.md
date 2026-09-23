@@ -105,4 +105,6 @@ Deliverable: documented Kyber512/768/1024 implementation, all official KATs pass
 
 Round-3 Kyber vs. FIPS 203 (ML-KEM): these references document Round-3 Kyber. The finalized NIST standard, ML-KEM (FIPS 203, 2024), differs in a few ways (domain separation, dropped ciphertext hash, sample bounds). For a deployable KEM, target ML-KEM and use this spec as background. To match these documents exactly, use Round-3. Decide before Week 4.
 
+**Decided 2026-09-08: Round-3 Kyber.** Chosen because the existing code already followed Round-3 conventions and because the available KAT vectors are the Round-3 ones, which is what allowed the week 5 gate to close. The Week 6 item about reconciling FIPS 203 differences therefore does not apply.
+
 Risk order: weeks 2 (NTT) and 5 (FO plus KATs) are the most likely to stall. Keeping a testable reference at each step means a bug in a later week can be traced back to a specific primitive.
